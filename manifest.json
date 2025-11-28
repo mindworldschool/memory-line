@@ -1,0 +1,33 @@
+{
+  "name": "Memory Line - MindWorld School",
+  "short_name": "Memory Line",
+  "description": "Тренажер послідовної пам'яті. Запам'ятовуйте і відтворюйте послідовності від 5 до 50 елементів.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF8F3",
+  "theme_color": "#B68E6B",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "games", "entertainment"],
+  "lang": "uk-UA",
+  "dir": "ltr"
+}
