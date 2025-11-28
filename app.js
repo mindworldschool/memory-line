@@ -98,6 +98,39 @@ const translations = {
       words: "Words only",
       both: "Images + Words"
     }
+  },
+  es: {
+    settings_title: "Configuración del juego",
+    element_count: "Número de elementos:",
+    display_mode: "Tipo de elementos:",
+    memory_time_mode: "Tiempo de memorización:",
+    play_time_mode: "Tiempo de respuesta:",
+    no_time: "Sin límite",
+    with_time: "Con temporizador",
+    seconds: "Segundos:",
+    start_game: "Iniciar juego",
+    exit: "Salir",
+    memory_screen: "Pantalla de memorización",
+    memory_done: "Memorizado — comenzar",
+    play_screen: "Juego",
+    check_answer: "Verificar",
+    drag_instruction: "Arrastra los elementos en el orden correcto:",
+    options_label: "Opciones:",
+    results_title: "¡Felicitaciones!",
+    success_message: "¡Bien hecho!",
+    elements_label: "Elementos:",
+    attempts_label: "Intentos:",
+    new_game: "Nuevo juego",
+    change_settings: "Cambiar configuración",
+    confirm_exit: "¿Terminar el juego?",
+    unsaved: "El progreso actual no se guardará.",
+    yes_exit: "Sí, salir",
+    cancel: "Cancelar",
+    display_modes: {
+      images: "Solo imágenes",
+      words: "Solo palabras",
+      both: "Imágenes + Palabras"
+    }
   }
 };
 
@@ -322,18 +355,29 @@ async function loadPools() {
 function generateSequence() {
   const count = State.elementCount;
   const mode = State.displayMode;
-  
+
   if (mode === 'images') {
     const selected = sample(State.imagesPool, count);
     State.sequence = selected.map(id => ({ type: 'image', value: id }));
   } else if (mode === 'words') {
     const selected = sample(State.wordsPool, count);
     State.sequence = selected.map(id => ({ type: 'word', value: id }));
-  } else { // both
-    const selected = sample(State.imagesPool, count);
-    State.sequence = selected.map(id => ({ type: 'both', value: id }));
+  } else { // both - mix of images and words
+    const halfCount = Math.ceil(count / 2);
+    const imageCount = halfCount;
+    const wordCount = count - halfCount;
+
+    const selectedImages = sample(State.imagesPool, imageCount);
+    const selectedWords = sample(State.wordsPool, wordCount);
+
+    const combined = [
+      ...selectedImages.map(id => ({ type: 'image', value: id })),
+      ...selectedWords.map(id => ({ type: 'word', value: id }))
+    ];
+
+    State.sequence = shuffle(combined);
   }
-  
+
   State.userSequence = new Array(count).fill(null);
   State.attempts = 0;
 }
@@ -342,14 +386,14 @@ function generateSequence() {
 function renderElement(element, showNumber = false, number = null) {
   const div = document.createElement('div');
   div.className = 'element-card';
-  
+
   if (showNumber && number !== null) {
     const numLabel = document.createElement('div');
     numLabel.className = 'element-number';
     numLabel.textContent = number;
     div.appendChild(numLabel);
   }
-  
+
   if (element.type === 'image') {
     const img = document.createElement('img');
     img.src = ASSETS.imagePath(element.value);
@@ -360,19 +404,8 @@ function renderElement(element, showNumber = false, number = null) {
     img.src = ASSETS.wordPath(element.value);
     img.alt = element.value;
     div.appendChild(img);
-  } else if (element.type === 'both') {
-    const img = document.createElement('img');
-    img.src = ASSETS.imagePath(element.value);
-    img.alt = element.value;
-    div.appendChild(img);
-    
-    const wordImg = document.createElement('img');
-    wordImg.src = ASSETS.wordPath(element.value);
-    wordImg.alt = element.value;
-    wordImg.className = 'word-image';
-    div.appendChild(wordImg);
   }
-  
+
   return div;
 }
 
