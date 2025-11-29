@@ -134,10 +134,33 @@ const translations = {
   }
 };
 
-// Current language
-let currentLang = localStorage.getItem("ml_lang") || 
-  ((navigator.language || "").startsWith("ru") ? "ru" :
-   (navigator.language || "").startsWith("ua") ? "ua" : "en") || "ua";
+// Get language from URL parameter, localStorage, or browser language
+function getInitialLanguage() {
+  // 1. Check URL parameter ?lang=xx
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlLang = urlParams.get('lang');
+  if (urlLang && translations[urlLang]) {
+    return urlLang;
+  }
+
+  // 2. Check localStorage
+  const storedLang = localStorage.getItem("ml_lang");
+  if (storedLang && translations[storedLang]) {
+    return storedLang;
+  }
+
+  // 3. Check browser language
+  const browserLang = navigator.language || "";
+  if (browserLang.startsWith("ru")) return "ru";
+  if (browserLang.startsWith("uk") || browserLang.startsWith("ua")) return "ua";
+  if (browserLang.startsWith("en")) return "en";
+  if (browserLang.startsWith("es")) return "es";
+
+  // 4. Default
+  return "ua";
+}
+
+let currentLang = getInitialLanguage();
 
 // Apply translations
 function applyTranslations() {
