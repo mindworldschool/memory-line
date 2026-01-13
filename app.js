@@ -134,10 +134,24 @@ const translations = {
   }
 };
 
-// Current language
-let currentLang = localStorage.getItem("ml_lang") || 
-  ((navigator.language || "").startsWith("ru") ? "ru" :
-   (navigator.language || "").startsWith("ua") ? "ua" : "en") || "ua";
+// === Current language (UPDATED) ===
+// 1. Читаем параметр ?lang=... из ссылки
+const urlParams = new URLSearchParams(window.location.search);
+const urlLang = urlParams.get('lang');
+
+// 2. Логика: Ссылка > Сохраненное > Браузер > UA
+let currentLang = 'ua';
+
+// Если в ссылке есть валидный язык — берем его
+if (urlLang && translations[urlLang]) {
+  currentLang = urlLang;
+} else {
+  // Иначе берем из памяти или угадываем по браузеру
+  currentLang = localStorage.getItem("ml_lang") || 
+    ((navigator.language || "").startsWith("ru") ? "ru" :
+     (navigator.language || "").startsWith("uk") || (navigator.language || "").startsWith("ua") ? "ua" : 
+     (navigator.language || "").startsWith("es") ? "es" : "en");
+}
 
 // Apply translations
 function applyTranslations() {
