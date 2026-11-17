@@ -593,3 +593,139 @@ input:focus-visible {
     gap: 8px;
   }
 }
+
+/* =====================================================================
+   КОМПОНОВКА ЭКРАНОВ ЗАПОМИНАНИЯ И ИГРЫ (лента, номера, кнопки снизу)
+   ===================================================================== */
+
+/* Верх: «Вихід» слева, таймер справа — одна строка на любой ширине */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  flex-wrap: nowrap;
+}
+.topbar .exit { order: 0; flex: 0 0 auto; }
+
+/* Название экрана — подпись, не кнопка */
+.screen-heading {
+  margin: 0;
+  text-align: center;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.screen-heading .badge {
+  background: none;
+  color: var(--text-primary, #2c3e50);
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  font-weight: 700;
+  white-space: normal;
+}
+.screen-count {
+  color: var(--text-secondary, #7d733a);
+  font-weight: 600;
+}
+
+/* Инструкция дублирует название экрана — скрыта (элемент нужен скрипту) */
+.drag-hint { display: none; }
+
+/* Главная кнопка под рядом */
+.bottom-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+.bottom-actions button {
+  min-width: 280px;
+  font-size: 17px;
+  padding: 14px 24px;
+}
+
+/* ---------- Лента запоминания ---------- */
+/* Фиксированное число карточек в строке: так понятно, где кончается строка,
+   и между карточками можно поставить стрелки «›» */
+.memory-container { padding: 8px 0; }
+.memory-grid {
+  --cols: 6;
+  --gap: 26px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 120px));
+  justify-content: center;
+  gap: 18px var(--gap);
+  width: 100%;
+}
+.memory-grid .element-card {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  overflow: visible;
+}
+
+/* Номер позиции — оранжевый кружок в левом верхнем углу, не под картинкой */
+.memory-grid .element-number {
+  top: -9px;
+  left: -9px;
+  transform: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary, #ff7c00);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Стрелка «›» между карточками в строке — читается как линия */
+.memory-grid .element-card::after {
+  content: "›";
+  position: absolute;
+  right: calc(var(--gap) / -2);
+  top: 50%;
+  transform: translate(50%, -50%);
+  color: var(--primary, #ff7c00);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+.memory-grid .element-card:last-child::after,
+.memory-grid .element-card:nth-child(6n)::after { content: none; }
+
+@media (max-width: 900px) {
+  .memory-grid { --cols: 5; }
+  .memory-grid .element-card:nth-child(6n)::after { content: "›"; }
+  .memory-grid .element-card:nth-child(5n)::after,
+  .memory-grid .element-card:last-child::after { content: none; }
+}
+
+@media (max-width: 700px) {
+  .memory-grid { --cols: 4; --gap: 22px; }
+  .memory-grid .element-card:nth-child(5n)::after,
+  .memory-grid .element-card:nth-child(6n)::after { content: "›"; }
+  .memory-grid .element-card:nth-child(4n)::after,
+  .memory-grid .element-card:last-child::after { content: none; }
+}
+
+/* ---------- Телефон ---------- */
+@media (max-width: 480px) {
+  .memory-grid { --cols: 3; --gap: 20px; row-gap: 16px; }
+  .memory-grid .element-card { padding: 6px; }
+  .memory-grid .element-card:nth-child(4n)::after,
+  .memory-grid .element-card:nth-child(5n)::after,
+  .memory-grid .element-card:nth-child(6n)::after { content: "›"; }
+  .memory-grid .element-card:nth-child(3n)::after,
+  .memory-grid .element-card:last-child::after { content: none; }
+  .memory-grid .element-number { width: 24px; height: 24px; font-size: 12px; top: -8px; left: -8px; }
+
+  .screen-heading { font-size: 19px; }
+  .bottom-actions button { width: 100%; min-width: 0; }
+  .topbar .exit { padding: 6px 14px; min-height: 38px; }
+}
