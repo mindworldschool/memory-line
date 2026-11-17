@@ -1,11 +1,11 @@
 :root {
-  --brand-ivory: #FDF8F3;
-  --brand-warm-gold: #B68E6B;
-  --brand-coral: #E8654B;
-  --brand-deep-moss: #7D733A;
-  --frame-orange: #ff7c00;
+  /* Цвета берутся из общей оболочки (trainer-shell/shell.v1.css) */
+  --brand-ivory: var(--bg-light, #fdfcf5);
+  --brand-warm-gold: var(--primary, #ff7c00);
+  --brand-coral: var(--primary, #ff7c00);
+  --brand-deep-moss: var(--text-secondary, #7d733a);
+  --ml-border: var(--border, #e0e0e0);
   --frame-gap: 24px;
-  --topbar: calc(var(--frame-gap) * 4.8);
 }
 
 * {
@@ -18,60 +18,20 @@ html, body {
 }
 
 body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: var(--frame-orange);
-  color: #333;
+  /* Шрифт, фон и цвет текста задаёт оболочка */
   overscroll-behavior: contain;
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
-  height: var(--topbar);
-  padding: 0 12px;
-}
-
-.header img {
-  height: calc(var(--topbar) * 1.0);
-}
-
-.header .title {
-  flex: 1;
-  text-align: center;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.5px;
-  font-size: calc(var(--topbar) * 0.56);
-  line-height: var(--topbar);
-}
-
-.lang-switcher {
-  margin-left: 12px;
-}
-
-.lang-switcher select {
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 2px solid var(--brand-warm-gold);
-  font-weight: 600;
-  background: #fff;
-  font-size: 14px;
 }
 
 /* Container */
 .container {
   position: relative;
-  max-width: 1200px;
+  width: min(1200px, calc(100% - 2 * var(--frame-gap)));
   margin: var(--frame-gap) auto var(--frame-gap);
   padding: 24px;
-  background: var(--brand-ivory);
-  border-radius: 28px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  background: var(--bg-white, #fff);
+  border-radius: var(--radius, 16px);
+  box-shadow: var(--shadow-card, 0 12px 30px rgba(255, 124, 0, 0.15));
 }
 
 /* Cards */
@@ -122,8 +82,10 @@ body {
 
 select, input[type="number"], input[type="range"], input[type="text"] {
   padding: 10px 12px;
-  border: 2px solid var(--brand-warm-gold);
-  border-radius: 12px;
+  border: 2px solid var(--ml-border);
+  border-radius: var(--radius-sm, 10px);
+  font-family: inherit;
+  color: inherit;
   background: #fff;
   font-size: 16px;
   min-height: 44px;
@@ -131,13 +93,15 @@ select, input[type="number"], input[type="range"], input[type="text"] {
 
 input[type="range"] {
   min-width: 150px;
+  accent-color: var(--primary, #ff7c00);
 }
 
 /* Buttons */
 button {
-  padding: 10px 14px;
+  padding: 10px 18px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius, 16px);
+  font-family: inherit;
   background: var(--brand-coral);
   color: #fff;
   font-weight: 700;
@@ -149,25 +113,27 @@ button {
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(232, 101, 75, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 124, 0, 0.3);
 }
 
 button:active {
   transform: translateY(0);
 }
 
+/* Второстепенная кнопка — как .btn--secondary оболочки */
 button.secondary {
-  background: #fff;
-  color: var(--brand-coral);
-  border: 2px solid var(--brand-coral);
+  background: transparent;
+  color: var(--primary-hover, #e06600);
+  border: 2px solid var(--primary, #ff7c00);
 }
 
+/* Выход — как .btn--exit оболочки */
 button.exit {
-  background: #fff;
-  color: var(--brand-coral);
-  border: 2px solid var(--brand-coral);
-  padding: 8px 12px;
-  border-radius: 12px;
+  background: transparent;
+  color: var(--brand-deep-moss);
+  border: 2px solid var(--ml-border);
+  padding: 8px 14px;
+  border-radius: var(--radius, 16px);
   font-weight: 700;
 }
 
@@ -179,7 +145,7 @@ button.btn-primary {
 }
 
 button.btn-check {
-  background: var(--brand-deep-moss);
+  background: var(--success, #4caf50);
   color: #fff;
 }
 
@@ -271,8 +237,8 @@ button.btn-check {
   position: relative;
   width: 120px;
   height: 120px;
-  border: 3px solid var(--brand-warm-gold);
-  border-radius: 16px;
+  border: 2px solid var(--ml-border);
+  border-radius: var(--radius, 16px);
   background: #fff;
   display: flex;
   flex-direction: column;
@@ -300,7 +266,7 @@ button.btn-check {
   transform: translate(-50%, -50%);
   font-size: 80px;
   font-weight: 900;
-  color: rgba(182, 142, 107, 0.15);
+  color: rgba(255, 124, 0, 0.15);
   pointer-events: none;
   z-index: 0;
   user-select: none;
@@ -332,14 +298,14 @@ button.btn-check {
 }
 
 .slot.drag-over {
-  background: rgba(182, 142, 107, 0.1);
+  background: rgba(255, 124, 0, 0.08);
   border-color: var(--brand-coral);
-  box-shadow: 0 0 0 4px rgba(232, 101, 75, 0.2);
+  box-shadow: 0 0 0 4px rgba(255, 124, 0, 0.2);
 }
 
 .slot.wrong {
   animation: shake 0.5s, wrongPulse 1s;
-  border-color: #ff0000;
+  border-color: var(--error, #f44336);
   background: rgba(255, 0, 0, 0.1);
 }
 
@@ -361,7 +327,7 @@ button.btn-check {
   transform: translate(-50%, -50%);
   font-size: 60px;
   font-weight: 900;
-  color: rgba(182, 142, 107, 0.2);
+  color: rgba(255, 124, 0, 0.2);
   pointer-events: none;
   z-index: 0;
   user-select: none;
@@ -407,6 +373,28 @@ button.btn-check {
   cursor: grabbing;
   transform: scale(1.1);
 }
+
+/* Палец: карточку тянем сами, браузер не прокручивает и не выделяет */
+.element-card.option,
+.slot .element-card {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Карточка, которую тянут пальцем, — бледнее на старом месте */
+.element-card.dragging {
+  opacity: 0.4;
+}
+
+/* Касание-выбор: выбранный вариант */
+.element-card.selected {
+  outline: 3px solid var(--primary, #ff7c00);
+  outline-offset: 2px;
+  transform: scale(1.05);
+}
+
 
 /* Results */
 .results {
@@ -475,9 +463,9 @@ button.btn-check {
 
 .modal-card {
   width: min(92vw, 460px);
-  background: var(--brand-ivory);
-  border: 2px solid var(--brand-warm-gold);
-  border-radius: 16px;
+  background: var(--bg-white, #fff);
+  border: 2px solid var(--ml-border);
+  border-radius: var(--radius, 16px);
   padding: 20px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
 }
@@ -488,7 +476,7 @@ button.btn-check {
 }
 
 .meta {
-  color: #777;
+  color: var(--brand-deep-moss);
   font-size: 14px;
 }
 
@@ -541,22 +529,11 @@ button.btn-check {
 
 @media (max-width: 720px) {
   :root {
-    --frame-gap: 16px;
-    --topbar: calc(var(--frame-gap) * 4.5);
-  }
-  
-  .header img {
-    height: calc(var(--topbar) * 0.7);
-  }
-  
-  .header .title {
-    font-size: clamp(20px, 7vw, 36px);
-    line-height: var(--topbar);
+    --frame-gap: 12px;
   }
   
   .container {
     padding: 16px;
-    border-radius: 20px;
     margin: var(--frame-gap) auto var(--frame-gap);
   }
   
@@ -581,7 +558,7 @@ button.btn-check {
 button:focus-visible,
 select:focus-visible,
 input:focus-visible {
-  outline: 3px solid rgba(182, 142, 107, 0.6);
+  outline: 3px solid rgba(255, 124, 0, 0.5);
   outline-offset: 2px;
   border-radius: 12px;
 }
@@ -591,5 +568,28 @@ input:focus-visible {
   * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Телефон: сетка компактнее, чтобы ячейки и варианты помещались ближе друг к другу */
+@media (max-width: 480px) {
+  .slots-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .slot {
+    width: 92px;
+    height: 92px;
+  }
+  .slot-number {
+    font-size: 40px;
+  }
+  .slot .element-card,
+  .element-card.option {
+    width: 84px;
+    height: 84px;
+  }
+  .options-tray {
+    gap: 8px;
   }
 }

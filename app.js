@@ -1,6 +1,7 @@
 // === Translations ===
 const translations = {
   ru: {
+    sec_short: "с",
     settings_title: "Настройка игры",
     element_count: "Количество элементов:",
     display_mode: "Тип элементов:",
@@ -34,6 +35,7 @@ const translations = {
     }
   },
   ua: {
+    sec_short: "с",
     settings_title: "Налаштування гри",
     element_count: "Кількість елементів:",
     display_mode: "Тип елементів:",
@@ -67,6 +69,7 @@ const translations = {
     }
   },
   en: {
+    sec_short: "s",
     settings_title: "Game Settings",
     element_count: "Number of elements:",
     display_mode: "Element type:",
@@ -100,6 +103,7 @@ const translations = {
     }
   },
   es: {
+    sec_short: "s",
     settings_title: "Configuración del juego",
     element_count: "Número de elementos:",
     display_mode: "Tipo de elementos:",
@@ -134,23 +138,14 @@ const translations = {
   }
 };
 
-// === Current language (UPDATED) ===
-// 1. Читаем параметр ?lang=... из ссылки
-const urlParams = new URLSearchParams(window.location.search);
-const urlLang = urlParams.get('lang');
-
-// 2. Логика: Ссылка > Сохраненное > Браузер > UA
+// === Язык ===
+// Язык выбирает общая оболочка (trainer-shell): ?lang= → сохранённый выбор → браузер → украинский.
+// Внутри тренажёра украинский называется "ua".
 let currentLang = 'ua';
 
-// Если в ссылке есть валидный язык — берем его
-if (urlLang && translations[urlLang]) {
-  currentLang = urlLang;
-} else {
-  // Иначе берем из памяти или угадываем по браузеру
-  currentLang = localStorage.getItem("ml_lang") || 
-    ((navigator.language || "").startsWith("ru") ? "ru" :
-     (navigator.language || "").startsWith("uk") || (navigator.language || "").startsWith("ua") ? "ua" : 
-     (navigator.language || "").startsWith("es") ? "es" : "en");
+/** Подпись секунд на текущем языке: «60с» / «60s», 0 — без ограничения */
+function formatSeconds(val) {
+  return val === 0 ? '∞' : `${val}${translations[currentLang].sec_short}`;
 }
 
 // Apply translations
@@ -196,6 +191,8 @@ function applyTranslations() {
   // Results screen
   document.querySelector("#screen-results h2").textContent = t.results_title;
   document.getElementById("successMessage").textContent = t.success_message;
+  document.getElementById("statTotalLabel").textContent = t.elements_label;
+  document.getElementById("statAttemptsLabel").textContent = t.attempts_label;
   document.getElementById("btnNewGame").textContent = t.new_game;
   document.getElementById("btnChangeSettings").textContent = t.change_settings;
   
@@ -204,20 +201,31 @@ function applyTranslations() {
   document.querySelector("#exitModal p.meta").textContent = t.unsaved;
   document.getElementById("exitYes").textContent = t.yes_exit;
   document.getElementById("exitNo").textContent = t.cancel;
+
+  // Подписи секунд у ползунков
+  const mem = document.getElementById("memorySeconds");
+  const play = document.getElementById("playSeconds");
+  if (mem) document.getElementById("memoryTimeValue").textContent = formatSeconds(parseInt(mem.value, 10));
+  if (play) document.getElementById("playTimeValue").textContent = formatSeconds(parseInt(play.value, 10));
 }
 
-// Initialize translations
+// Шапка и кнопки UA / EN / RU / ES — из оболочки. Она же ставит <html lang> и заголовок вкладки.
 document.addEventListener("DOMContentLoaded", () => {
-  const select = document.getElementById("langSelect");
-  if (select) {
-    select.value = currentLang;
-    select.addEventListener("change", (e) => {
-      currentLang = e.target.value;
-      localStorage.setItem("ml_lang", currentLang);
+  MWShell.init({
+    title: 'Memory Line',
+    tagline: {
+      ua: 'Тренажер послідовної пам’яті',
+      en: 'Sequence memory trainer',
+      ru: 'Тренажёр последовательной памяти',
+      es: 'Entrenador de memoria secuencial'
+    },
+    docTitle: 'Memory Line — MindWorld School',
+    ukrainianCode: 'ua',
+    onLangChange: (lang) => {
+      currentLang = translations[lang] ? lang : 'ua';
       applyTranslations();
-    });
-  }
-  applyTranslations();
+    }
+  });
 });
 
 // === Sound Effects ===
@@ -394,6 +402,7 @@ function generateSequence() {
 
   State.userSequence = new Array(count).fill(null);
   State.attempts = 0;
+  tapSelection = null;
 }
 
 // === Render Element ===
@@ -525,6 +534,7 @@ function renderPlayScreen() {
       card.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', JSON.stringify({ fromSlot: index }));
       });
+      enableTouchDrag(card, { fromSlot: index });
       
       slot.appendChild(card);
     }
@@ -544,23 +554,13 @@ function renderPlayScreen() {
       slot.classList.remove('drag-over');
       
       const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      
-      if (data.fromTray !== undefined) {
-        // From tray
-        const element = State.sequence[data.fromTray];
-        State.userSequence[index] = element;
-        SFX.drop.currentTime = 0;
-        SFX.drop.play().catch(() => {});
-      } else if (data.fromSlot !== undefined) {
-        // Move between slots
-        const element = State.userSequence[data.fromSlot];
-        State.userSequence[data.fromSlot] = null;
-        State.userSequence[index] = element;
-        SFX.drop.currentTime = 0;
-        SFX.drop.play().catch(() => {});
-      }
-      
-      renderPlayScreen();
+      placeIntoSlot(data, index);
+    });
+
+    // Касание-выбор: выбранный вариант кладётся в ячейку по касанию/клику
+    slot.addEventListener('click', () => {
+      if (!tapSelection) return;
+      placeIntoSlot(tapSelection, index);
     });
     
     slotsGrid.appendChild(slot);
@@ -584,9 +584,139 @@ function renderPlayScreen() {
     option.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('text/plain', JSON.stringify({ fromTray: originalIndex }));
     });
+    enableTouchDrag(option, { fromTray: originalIndex });
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleTapSelection(option, { fromTray: originalIndex });
+    });
+    if (tapSelection && tapSelection.fromTray === originalIndex) option.classList.add('selected');
     
     UI.play.optionsTray.appendChild(option);
   });
+}
+
+// === Перенос элемента в ячейку (общий для мыши, пальца и касания-выбора) ===
+function placeIntoSlot(data, index) {
+  if (data.fromTray !== undefined) {
+    // From tray
+    const element = State.sequence[data.fromTray];
+    State.userSequence[index] = element;
+  } else if (data.fromSlot !== undefined) {
+    // Move between slots
+    if (data.fromSlot === index) { tapSelection = null; renderPlayScreen(); return; }
+    const element = State.userSequence[data.fromSlot];
+    State.userSequence[data.fromSlot] = null;
+    State.userSequence[index] = element;
+  } else {
+    return;
+  }
+  SFX.drop.currentTime = 0;
+  SFX.drop.play().catch(() => {});
+  tapSelection = null;
+  renderPlayScreen();
+}
+
+// === Касание-выбор: коснулся варианта — он выделен, коснулся ячейки — он там ===
+let tapSelection = null;
+
+function toggleTapSelection(el, data) {
+  const same = tapSelection &&
+    tapSelection.fromTray === data.fromTray && tapSelection.fromSlot === data.fromSlot;
+  document.querySelectorAll('.element-card.selected').forEach(c => c.classList.remove('selected'));
+  tapSelection = same ? null : data;
+  if (!same) el.classList.add('selected');
+}
+
+// === Перетаскивание пальцем (как в Memory Match): «призрак» карточки едет за пальцем ===
+function enableTouchDrag(cardEl, data) {
+  let dragging = false;
+  let moved = false;
+  let ghost = null;
+  let startX = 0, startY = 0, lastX = 0, lastY = 0;
+  let overSlot = null;
+
+  function slotAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return el ? el.closest('.slot') : null;
+  }
+
+  function highlight(x, y) {
+    const slot = slotAt(x, y);
+    if (slot === overSlot) return;
+    if (overSlot) overSlot.classList.remove('drag-over');
+    overSlot = slot;
+    if (overSlot) overSlot.classList.add('drag-over');
+  }
+
+  function onTouchStart(e) {
+    if (dragging) return;
+    const t = e.touches && e.touches[0]; if (!t) return;
+    dragging = true;
+    moved = false;
+    startX = lastX = t.clientX;
+    startY = lastY = t.clientY;
+    e.preventDefault();
+  }
+
+  function onTouchMove(e) {
+    if (!dragging) return;
+    const t = e.touches && e.touches[0]; if (!t) return;
+    lastX = t.clientX; lastY = t.clientY;
+    if (!moved && Math.hypot(lastX - startX, lastY - startY) > 8) {
+      moved = true;
+      cardEl.classList.add('dragging');
+      const rect = cardEl.getBoundingClientRect();
+      ghost = cardEl.cloneNode(true);
+      ghost.classList.remove('selected');
+      ghost.style.position = 'fixed';
+      ghost.style.width = rect.width + 'px';
+      ghost.style.height = rect.height + 'px';
+      ghost.style.pointerEvents = 'none';
+      ghost.style.zIndex = '9999';
+      ghost.style.opacity = '0.9';
+      ghost.style.margin = '0';
+      document.body.appendChild(ghost);
+    }
+    if (ghost) {
+      ghost.style.left = (lastX - ghost.offsetWidth / 2) + 'px';
+      ghost.style.top = (lastY - ghost.offsetHeight / 2) + 'px';
+      highlight(lastX, lastY);
+    }
+    e.preventDefault();
+  }
+
+  function onTouchEnd(e) {
+    if (!dragging) return;
+    const wasMoved = moved;
+    const target = wasMoved ? slotAt(lastX, lastY) : null;
+    cleanup();
+    e.preventDefault();
+    if (!wasMoved) {
+      // Короткое касание без движения — выбор (или выбор ячейки, если вариант уже выбран)
+      if (data.fromSlot !== undefined && tapSelection) {
+        placeIntoSlot(tapSelection, data.fromSlot);
+      } else {
+        toggleTapSelection(cardEl, data);
+      }
+      return;
+    }
+    if (target) placeIntoSlot(data, parseInt(target.dataset.index, 10));
+  }
+
+  function cleanup() {
+    dragging = false;
+    moved = false;
+    cardEl.classList.remove('dragging');
+    if (overSlot) overSlot.classList.remove('drag-over');
+    overSlot = null;
+    if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    ghost = null;
+  }
+
+  cardEl.addEventListener('touchstart', onTouchStart, { passive: false });
+  cardEl.addEventListener('touchmove', onTouchMove, { passive: false });
+  cardEl.addEventListener('touchend', onTouchEnd, { passive: false });
+  cardEl.addEventListener('touchcancel', cleanup);
 }
 
 // === Check Answer ===
@@ -745,12 +875,12 @@ UI.settings.playTimeMode.addEventListener('change', () => {
 
 UI.settings.memorySeconds.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
-  UI.settings.memoryTimeValue.textContent = val === 0 ? '∞' : `${val}с`;
+  UI.settings.memoryTimeValue.textContent = formatSeconds(val);
 });
 
 UI.settings.playSeconds.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
-  UI.settings.playTimeValue.textContent = val === 0 ? '∞' : `${val}с`;
+  UI.settings.playTimeValue.textContent = formatSeconds(val);
 });
 
 UI.settings.btnStart.addEventListener('click', startGame);
