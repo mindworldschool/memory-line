@@ -114,17 +114,22 @@
     <!-- Memory Screen -->
     <section id="screen-memory" class="card hidden">
       <div class="flex-col">
+        <!-- Верх: «Вихід» слева, таймер справа -->
         <div class="topbar">
           <button id="btnExitMemory" class="exit">Вихід</button>
-          <div>
-            <span class="badge">Екран запам'ятовування</span>
-            <span id="memoryTimerBox" class="timer-box hidden">00:00</span>
-          </div>
-          <button id="btnMemoryDone" class="secondary">Запам'ятав — почати</button>
+          <span id="memoryTimerBox" class="timer-box hidden">00:00</span>
         </div>
+
+        <!-- Название экрана — подпись, не кнопка; в скобках число картинок -->
+        <h2 class="screen-heading"><span class="badge">Запам'ятай порядок</span> <span id="memoryCount" class="screen-count"></span></h2>
 
         <div class="memory-container" id="memoryContainer">
           <!-- Sequence will be rendered here -->
+        </div>
+
+        <!-- Главная кнопка — под рядом: сначала смотрим, потом начинаем -->
+        <div class="bottom-actions">
+          <button id="btnMemoryDone" class="btn-primary">Запам'ятав — почати</button>
         </div>
       </div>
     </section>
@@ -132,16 +137,14 @@
     <!-- Play Screen -->
     <section id="screen-play" class="card hidden">
       <div class="flex-col">
+        <!-- Верх: «Вихід» слева, таймер справа -->
         <div class="topbar">
           <button id="btnExitPlay" class="exit">Вихід</button>
-          <div>
-            <span class="badge">Гра</span>
-            <span id="playTimerBox" class="timer-box hidden">00:00</span>
-          </div>
-          <button id="btnCheckAnswer" class="btn-check">Перевірка</button>
+          <span id="playTimerBox" class="timer-box hidden">00:00</span>
         </div>
 
-        <h3 class="section-subtitle">Перетягніть елементи у правильному порядку:</h3>
+        <h2 class="screen-heading"><span class="badge">Розстав по порядку</span></h2>
+        <h3 class="section-subtitle drag-hint">Перетягніть елементи у правильному порядку:</h3>
         
         <div class="slots-container" id="slotsContainer">
           <!-- Empty slots will be rendered here -->
@@ -151,6 +154,10 @@
         
         <div class="options-tray" id="optionsTray">
           <!-- Options will be rendered here -->
+        </div>
+
+        <div class="bottom-actions">
+          <button id="btnCheckAnswer" class="btn-check">Перевірка</button>
         </div>
       </div>
     </section>

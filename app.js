@@ -12,9 +12,9 @@ const translations = {
     seconds: "Секунды:",
     start_game: "Начать игру",
     exit: "Выход",
-    memory_screen: "Экран запоминания",
+    memory_screen: "Запомни порядок",
     memory_done: "Запомнил — начать",
-    play_screen: "Игра",
+    play_screen: "Расставь по порядку",
     check_answer: "Проверка",
     drag_instruction: "Перетащите элементы в правильном порядке:",
     options_label: "Варианты:",
@@ -46,9 +46,9 @@ const translations = {
     seconds: "Секунди:",
     start_game: "Почати гру",
     exit: "Вихід",
-    memory_screen: "Екран запам'ятовування",
+    memory_screen: "Запам'ятай порядок",
     memory_done: "Запам'ятав — почати",
-    play_screen: "Гра",
+    play_screen: "Розстав по порядку",
     check_answer: "Перевірка",
     drag_instruction: "Перетягніть елементи у правильному порядку:",
     options_label: "Варіанти:",
@@ -80,9 +80,9 @@ const translations = {
     seconds: "Seconds:",
     start_game: "Start game",
     exit: "Exit",
-    memory_screen: "Memory screen",
+    memory_screen: "Remember the order",
     memory_done: "Memorized — start",
-    play_screen: "Game",
+    play_screen: "Put them in order",
     check_answer: "Check",
     drag_instruction: "Drag elements in the correct order:",
     options_label: "Options:",
@@ -114,9 +114,9 @@ const translations = {
     seconds: "Segundos:",
     start_game: "Iniciar juego",
     exit: "Salir",
-    memory_screen: "Pantalla de memorización",
+    memory_screen: "Memoriza el orden",
     memory_done: "Memorizado — comenzar",
-    play_screen: "Juego",
+    play_screen: "Ponlos en orden",
     check_answer: "Verificar",
     drag_instruction: "Arrastra los elementos en el orden correcto:",
     options_label: "Opciones:",
@@ -445,6 +445,10 @@ function renderMemoryScreen() {
   });
   
   UI.memory.container.appendChild(grid);
+
+  // Число картинок рядом с названием экрана: «Запам'ятай порядок (10)»
+  const count = document.getElementById('memoryCount');
+  if (count) count.textContent = `(${State.sequence.length})`;
 }
 
 // === Timer Functions ===
