@@ -374,6 +374,28 @@ button.btn-check {
   transform: scale(1.1);
 }
 
+/* Палец: карточку тянем сами, браузер не прокручивает и не выделяет */
+.element-card.option,
+.slot .element-card {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Карточка, которую тянут пальцем, — бледнее на старом месте */
+.element-card.dragging {
+  opacity: 0.4;
+}
+
+/* Касание-выбор: выбранный вариант */
+.element-card.selected {
+  outline: 3px solid var(--primary, #ff7c00);
+  outline-offset: 2px;
+  transform: scale(1.05);
+}
+
+
 /* Results */
 .results {
   display: flex;
@@ -546,5 +568,28 @@ input:focus-visible {
   * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Телефон: сетка компактнее, чтобы ячейки и варианты помещались ближе друг к другу */
+@media (max-width: 480px) {
+  .slots-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .slot {
+    width: 92px;
+    height: 92px;
+  }
+  .slot-number {
+    font-size: 40px;
+  }
+  .slot .element-card,
+  .element-card.option {
+    width: 84px;
+    height: 84px;
+  }
+  .options-tray {
+    gap: 8px;
   }
 }

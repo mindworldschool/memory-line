@@ -402,6 +402,7 @@ function generateSequence() {
 
   State.userSequence = new Array(count).fill(null);
   State.attempts = 0;
+  tapSelection = null;
 }
 
 // === Render Element ===
@@ -533,6 +534,7 @@ function renderPlayScreen() {
       card.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', JSON.stringify({ fromSlot: index }));
       });
+      enableTouchDrag(card, { fromSlot: index });
       
       slot.appendChild(card);
     }
@@ -552,23 +554,13 @@ function renderPlayScreen() {
       slot.classList.remove('drag-over');
       
       const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      
-      if (data.fromTray !== undefined) {
-        // From tray
-        const element = State.sequence[data.fromTray];
-        State.userSequence[index] = element;
-        SFX.drop.currentTime = 0;
-        SFX.drop.play().catch(() => {});
-      } else if (data.fromSlot !== undefined) {
-        // Move between slots
-        const element = State.userSequence[data.fromSlot];
-        State.userSequence[data.fromSlot] = null;
-        State.userSequence[index] = element;
-        SFX.drop.currentTime = 0;
-        SFX.drop.play().catch(() => {});
-      }
-      
-      renderPlayScreen();
+      placeIntoSlot(data, index);
+    });
+
+    // Касание-выбор: выбранный вариант кладётся в ячейку по касанию/клику
+    slot.addEventListener('click', () => {
+      if (!tapSelection) return;
+      placeIntoSlot(tapSelection, index);
     });
     
     slotsGrid.appendChild(slot);
@@ -592,9 +584,139 @@ function renderPlayScreen() {
     option.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('text/plain', JSON.stringify({ fromTray: originalIndex }));
     });
+    enableTouchDrag(option, { fromTray: originalIndex });
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleTapSelection(option, { fromTray: originalIndex });
+    });
+    if (tapSelection && tapSelection.fromTray === originalIndex) option.classList.add('selected');
     
     UI.play.optionsTray.appendChild(option);
   });
+}
+
+// === Перенос элемента в ячейку (общий для мыши, пальца и касания-выбора) ===
+function placeIntoSlot(data, index) {
+  if (data.fromTray !== undefined) {
+    // From tray
+    const element = State.sequence[data.fromTray];
+    State.userSequence[index] = element;
+  } else if (data.fromSlot !== undefined) {
+    // Move between slots
+    if (data.fromSlot === index) { tapSelection = null; renderPlayScreen(); return; }
+    const element = State.userSequence[data.fromSlot];
+    State.userSequence[data.fromSlot] = null;
+    State.userSequence[index] = element;
+  } else {
+    return;
+  }
+  SFX.drop.currentTime = 0;
+  SFX.drop.play().catch(() => {});
+  tapSelection = null;
+  renderPlayScreen();
+}
+
+// === Касание-выбор: коснулся варианта — он выделен, коснулся ячейки — он там ===
+let tapSelection = null;
+
+function toggleTapSelection(el, data) {
+  const same = tapSelection &&
+    tapSelection.fromTray === data.fromTray && tapSelection.fromSlot === data.fromSlot;
+  document.querySelectorAll('.element-card.selected').forEach(c => c.classList.remove('selected'));
+  tapSelection = same ? null : data;
+  if (!same) el.classList.add('selected');
+}
+
+// === Перетаскивание пальцем (как в Memory Match): «призрак» карточки едет за пальцем ===
+function enableTouchDrag(cardEl, data) {
+  let dragging = false;
+  let moved = false;
+  let ghost = null;
+  let startX = 0, startY = 0, lastX = 0, lastY = 0;
+  let overSlot = null;
+
+  function slotAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return el ? el.closest('.slot') : null;
+  }
+
+  function highlight(x, y) {
+    const slot = slotAt(x, y);
+    if (slot === overSlot) return;
+    if (overSlot) overSlot.classList.remove('drag-over');
+    overSlot = slot;
+    if (overSlot) overSlot.classList.add('drag-over');
+  }
+
+  function onTouchStart(e) {
+    if (dragging) return;
+    const t = e.touches && e.touches[0]; if (!t) return;
+    dragging = true;
+    moved = false;
+    startX = lastX = t.clientX;
+    startY = lastY = t.clientY;
+    e.preventDefault();
+  }
+
+  function onTouchMove(e) {
+    if (!dragging) return;
+    const t = e.touches && e.touches[0]; if (!t) return;
+    lastX = t.clientX; lastY = t.clientY;
+    if (!moved && Math.hypot(lastX - startX, lastY - startY) > 8) {
+      moved = true;
+      cardEl.classList.add('dragging');
+      const rect = cardEl.getBoundingClientRect();
+      ghost = cardEl.cloneNode(true);
+      ghost.classList.remove('selected');
+      ghost.style.position = 'fixed';
+      ghost.style.width = rect.width + 'px';
+      ghost.style.height = rect.height + 'px';
+      ghost.style.pointerEvents = 'none';
+      ghost.style.zIndex = '9999';
+      ghost.style.opacity = '0.9';
+      ghost.style.margin = '0';
+      document.body.appendChild(ghost);
+    }
+    if (ghost) {
+      ghost.style.left = (lastX - ghost.offsetWidth / 2) + 'px';
+      ghost.style.top = (lastY - ghost.offsetHeight / 2) + 'px';
+      highlight(lastX, lastY);
+    }
+    e.preventDefault();
+  }
+
+  function onTouchEnd(e) {
+    if (!dragging) return;
+    const wasMoved = moved;
+    const target = wasMoved ? slotAt(lastX, lastY) : null;
+    cleanup();
+    e.preventDefault();
+    if (!wasMoved) {
+      // Короткое касание без движения — выбор (или выбор ячейки, если вариант уже выбран)
+      if (data.fromSlot !== undefined && tapSelection) {
+        placeIntoSlot(tapSelection, data.fromSlot);
+      } else {
+        toggleTapSelection(cardEl, data);
+      }
+      return;
+    }
+    if (target) placeIntoSlot(data, parseInt(target.dataset.index, 10));
+  }
+
+  function cleanup() {
+    dragging = false;
+    moved = false;
+    cardEl.classList.remove('dragging');
+    if (overSlot) overSlot.classList.remove('drag-over');
+    overSlot = null;
+    if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    ghost = null;
+  }
+
+  cardEl.addEventListener('touchstart', onTouchStart, { passive: false });
+  cardEl.addEventListener('touchmove', onTouchMove, { passive: false });
+  cardEl.addEventListener('touchend', onTouchEnd, { passive: false });
+  cardEl.addEventListener('touchcancel', cleanup);
 }
 
 // === Check Answer ===
