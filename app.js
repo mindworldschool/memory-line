@@ -1,6 +1,7 @@
 // === Translations ===
 const translations = {
   ru: {
+    sec_short: "с",
     settings_title: "Настройка игры",
     element_count: "Количество элементов:",
     display_mode: "Тип элементов:",
@@ -34,6 +35,7 @@ const translations = {
     }
   },
   ua: {
+    sec_short: "с",
     settings_title: "Налаштування гри",
     element_count: "Кількість елементів:",
     display_mode: "Тип елементів:",
@@ -67,6 +69,7 @@ const translations = {
     }
   },
   en: {
+    sec_short: "s",
     settings_title: "Game Settings",
     element_count: "Number of elements:",
     display_mode: "Element type:",
@@ -100,6 +103,7 @@ const translations = {
     }
   },
   es: {
+    sec_short: "s",
     settings_title: "Configuración del juego",
     element_count: "Número de elementos:",
     display_mode: "Tipo de elementos:",
@@ -134,23 +138,14 @@ const translations = {
   }
 };
 
-// === Current language (UPDATED) ===
-// 1. Читаем параметр ?lang=... из ссылки
-const urlParams = new URLSearchParams(window.location.search);
-const urlLang = urlParams.get('lang');
-
-// 2. Логика: Ссылка > Сохраненное > Браузер > UA
+// === Язык ===
+// Язык выбирает общая оболочка (trainer-shell): ?lang= → сохранённый выбор → браузер → украинский.
+// Внутри тренажёра украинский называется "ua".
 let currentLang = 'ua';
 
-// Если в ссылке есть валидный язык — берем его
-if (urlLang && translations[urlLang]) {
-  currentLang = urlLang;
-} else {
-  // Иначе берем из памяти или угадываем по браузеру
-  currentLang = localStorage.getItem("ml_lang") || 
-    ((navigator.language || "").startsWith("ru") ? "ru" :
-     (navigator.language || "").startsWith("uk") || (navigator.language || "").startsWith("ua") ? "ua" : 
-     (navigator.language || "").startsWith("es") ? "es" : "en");
+/** Подпись секунд на текущем языке: «60с» / «60s», 0 — без ограничения */
+function formatSeconds(val) {
+  return val === 0 ? '∞' : `${val}${translations[currentLang].sec_short}`;
 }
 
 // Apply translations
@@ -196,6 +191,8 @@ function applyTranslations() {
   // Results screen
   document.querySelector("#screen-results h2").textContent = t.results_title;
   document.getElementById("successMessage").textContent = t.success_message;
+  document.getElementById("statTotalLabel").textContent = t.elements_label;
+  document.getElementById("statAttemptsLabel").textContent = t.attempts_label;
   document.getElementById("btnNewGame").textContent = t.new_game;
   document.getElementById("btnChangeSettings").textContent = t.change_settings;
   
@@ -204,20 +201,31 @@ function applyTranslations() {
   document.querySelector("#exitModal p.meta").textContent = t.unsaved;
   document.getElementById("exitYes").textContent = t.yes_exit;
   document.getElementById("exitNo").textContent = t.cancel;
+
+  // Подписи секунд у ползунков
+  const mem = document.getElementById("memorySeconds");
+  const play = document.getElementById("playSeconds");
+  if (mem) document.getElementById("memoryTimeValue").textContent = formatSeconds(parseInt(mem.value, 10));
+  if (play) document.getElementById("playTimeValue").textContent = formatSeconds(parseInt(play.value, 10));
 }
 
-// Initialize translations
+// Шапка и кнопки UA / EN / RU / ES — из оболочки. Она же ставит <html lang> и заголовок вкладки.
 document.addEventListener("DOMContentLoaded", () => {
-  const select = document.getElementById("langSelect");
-  if (select) {
-    select.value = currentLang;
-    select.addEventListener("change", (e) => {
-      currentLang = e.target.value;
-      localStorage.setItem("ml_lang", currentLang);
+  MWShell.init({
+    title: 'Memory Line',
+    tagline: {
+      ua: 'Тренажер послідовної пам’яті',
+      en: 'Sequence memory trainer',
+      ru: 'Тренажёр последовательной памяти',
+      es: 'Entrenador de memoria secuencial'
+    },
+    docTitle: 'Memory Line — MindWorld School',
+    ukrainianCode: 'ua',
+    onLangChange: (lang) => {
+      currentLang = translations[lang] ? lang : 'ua';
       applyTranslations();
-    });
-  }
-  applyTranslations();
+    }
+  });
 });
 
 // === Sound Effects ===
@@ -745,12 +753,12 @@ UI.settings.playTimeMode.addEventListener('change', () => {
 
 UI.settings.memorySeconds.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
-  UI.settings.memoryTimeValue.textContent = val === 0 ? '∞' : `${val}с`;
+  UI.settings.memoryTimeValue.textContent = formatSeconds(val);
 });
 
 UI.settings.playSeconds.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
-  UI.settings.playTimeValue.textContent = val === 0 ? '∞' : `${val}с`;
+  UI.settings.playTimeValue.textContent = formatSeconds(val);
 });
 
 UI.settings.btnStart.addEventListener('click', startGame);
